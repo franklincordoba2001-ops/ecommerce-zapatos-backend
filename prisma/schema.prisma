@@ -16,6 +16,11 @@ model Usuario {
   createdAt DateTime @default(now())
   ordenes   Orden[]
 }
+model Categoria {
+  id      Int      @id @default(autoincrement())
+  nombre  String   @unique
+  zapatos Zapato[]
+}
 
 model Zapato {
   id        Int      @id @default(autoincrement())
@@ -25,6 +30,8 @@ model Zapato {
   stock     Int
   imagenUrl String?
   createdAt DateTime @default(now())
+ categoriaId Int
+ categoria Categoria @relation(fields:[categoriaId], references:[id])
   detalles  DetalleOrden[]
 }
 
