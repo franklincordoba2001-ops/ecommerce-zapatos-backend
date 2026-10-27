@@ -36,9 +36,23 @@ export default function ProductCard({ product, onViewDetails }) {
       <div className="card-body">
         <span className="card-category">{product.categoria?.nombre || 'General'}</span>
         <h3 className="card-title">{product.nombre}</h3>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 38 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 38 }}>
           {product.descripcion || 'Un calzado chebre diseñado para ofrecer la máxima comodidad y estilo urbano en tu día a día.'}
         </p>
+
+        {/* Vista previa de tallas disponibles */}
+        {product.tallas && product.tallas.length > 0 && (
+          <div className="card-sizes-row">
+            {product.tallas.slice(0, 5).map((talla) => (
+              <span key={talla} className="card-size-tag available">
+                {talla}
+              </span>
+            ))}
+            {product.tallas.length > 5 && (
+              <span className="card-size-tag">+{product.tallas.length - 5}</span>
+            )}
+          </div>
+        )}
 
         <div className="card-price-row">
           <div>

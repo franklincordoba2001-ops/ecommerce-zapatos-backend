@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthProvider'
-import { X, ShoppingBag, Plus, Minus, Trash2, CreditCard } from 'lucide-react'
+import { X, ShoppingBag, Plus, Minus, Trash2, CreditCard, Truck } from 'lucide-react'
 import { getImageUrl } from '../lib/api'
 
 export default function CartDrawer() {
@@ -14,6 +14,10 @@ export default function CartDrawer() {
   const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0)
   const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0)
   const getCartKey = (item) => item.cartKey || `${item.id}-${item.talla || 'N/A'}`
+
+  const FREE_SHIPPING_THRESHOLD = 250000
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - total)
+  const shippingProgress = Math.min(100, Math.round((total / FREE_SHIPPING_THRESHOLD) * 100))
 
   const handleCheckout = () => {
     if (cart.length === 0) return
@@ -49,6 +53,27 @@ export default function CartDrawer() {
             <X size={18} />
           </button>
         </div>
+
+        {cart.length > 0 && (
+          <div style={{ padding: '16px 20px 0' }}>
+            <div className="shipping-tracker">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, gap: 8 }}>
+                <span style={{ fontWeight: 600, color: remainingForFreeShipping === 0 ? '#2ed573' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Truck size={14} style={{ color: remainingForFreeShipping === 0 ? '#2ed573' : 'var(--accent)' }} />
+                  {remainingForFreeShipping === 0
+                    ? '🎉 ¡Tienes Envío Gratis asegurado!'
+                    : `Faltan $${remainingForFreeShipping.toLocaleString('es-CO')} para envío gratis`}
+                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: 11, fontWeight: 700 }}>
+                  {shippingProgress}%
+                </span>
+              </div>
+              <div className="shipping-bar-bg">
+                <div className="shipping-bar-fill" style={{ width: `${shippingProgress}%` }}></div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="cart-items">
           {cart.length === 0 ? (

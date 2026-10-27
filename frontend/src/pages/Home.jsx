@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import ProductCard from '../components/ProductCard'
+import ProductSkeleton from '../components/ProductSkeleton'
 import CartDrawer from '../components/CartDrawer'
 import api from '../lib/api'
 import { useCart } from '../context/CartContext'
 import { getStockForSize, getTotalStock } from '../lib/stock'
-import { Search, SlidersHorizontal, ArrowUpDown, X, Star, ShieldCheck, Truck, ShoppingCart } from 'lucide-react'
+import { Search, SlidersHorizontal, ArrowUpDown, X, Star, ShieldCheck, Truck, ShoppingCart, Check } from 'lucide-react'
 
 export default function Home() {
   const [products, setProducts] = useState([])
@@ -19,7 +20,8 @@ export default function Home() {
   const [totalProducts, setTotalProducts] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState(null) // For the detailed modal
   const [selectedSize, setSelectedSize] = useState('')
-  const { addToCart } = useCart()
+  const [addedJustNow, setAddedJustNow] = useState(false)
+  const { addToCart, setCartOpen } = useCart()
 
   const LIMIT = 12
 
@@ -93,10 +95,34 @@ export default function Home() {
   const openProductDetails = (product) => {
     setSelectedProduct(product)
     setSelectedSize('')
+    setAddedJustNow(false)
   }
   const closeProductDetails = () => {
     setSelectedProduct(null)
     setSelectedSize('')
+    setAddedJustNow(false)
+  }
+
+  // Cerrar modal con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && selectedProduct) {
+        closeProductDetails()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedProduct])
+
+  const handleAddToCartModal = () => {
+    if (!selectedProduct || !selectedSize || selectedSizeStock <= 0) return
+    addToCart(selectedProduct, selectedSize)
+    setAddedJustNow(true)
+    setTimeout(() => {
+      setAddedJustNow(false)
+      closeProductDetails()
+      setCartOpen(true)
+    }, 450)
   }
 
   return (
@@ -209,9 +235,7 @@ export default function Home() {
           <h2 className="section-title">Nuestra Colección</h2>
 
           {loading ? (
-            <div className="full-spinner">
-              <div className="spinner" style={{ width: 44, height: 44 }}></div>
-            </div>
+            <ProductSkeleton count={LIMIT} />
           ) : filteredProducts.length === 0 ? (
             <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
               <p style={{ fontSize: 18, fontWeight: 500, marginBottom: 8, color: '#fff' }}>No encontramos resultados</p>
@@ -435,15 +459,39 @@ export default function Home() {
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button
                       className="btn-primary"
-                      onClick={() => {
-                        addToCart(selectedProduct, selectedSize)
-                        closeProductDetails()
+                      onClick={handleAddToCartModal}
+                      disabled={selectedSizeStock <= 0 || !selectedSize || addedJustNow}
+                      style={{
+                        flexGrow: 1,
+                        padding: '14px',
+                        borderRadius: 12,
+                        justifyContent: 'center',
+                        background: addedJustNow
+                          ? 'linear-gradient(135deg, #2ed573 0%, #26af5f 100%)'
+                          : undefined,
+                        cursor: !selectedSize || selectedSizeStock <= 0 ? 'not-allowed' : 'pointer',
+                        opacity: !selectedSize || selectedSizeStock <= 0 ? 0.65 : 1,
+                        transition: 'all 0.25s ease',
                       }}
-                      disabled={selectedSizeStock <= 0 || !selectedSize}
-                      style={{ flexGrow: 1, padding: '14px', borderRadius: 12, justifyContent: 'center' }}
                     >
-                      <ShoppingCart size={18} />
-                      <span>Agregar al Carrito</span>
+                      {addedJustNow ? (
+                        <>
+                          <Check size={18} />
+                          <span>¡Agregado al Carrito!</span>
+                        </>
+                      ) : !selectedSize ? (
+                        <>
+                          <ShoppingCart size={18} />
+                          <span>Elige una Talla</span>
+                        </>
+                      ) : selectedSizeStock <= 0 ? (
+                        <span>Talla {selectedSize} Agotada</span>
+                      ) : (
+                        <>
+                          <ShoppingCart size={18} />
+                          <span>Agregar al Carrito</span>
+                        </>
+                      )}
                     </button>
                     <button
                       className="btn-secondary"
