@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  email     String   @unique
+  password  String
+  rol       String   @default("CLIENTE")
+  createdAt DateTime @default(now())
+  ordenes   Orden[]
+}
+model Categoria {
+  id      Int      @id @default(autoincrement())
+  nombre  String   @unique
+  zapatos Zapato[]
+}
+
+model Zapato {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  descripcion String
+  precio      Float
+  imagenUrl   String?
+  tallas      String[]
+  createdAt   DateTime     @default(now())
+  categoriaId Int
+  categoria   Categoria    @relation(fields: [categoriaId], references: [id])
+  detalles    DetalleOrden[]
+  stockTallas StockTalla[]
+}
+
+model StockTalla {
+  id       Int    @id @default(autoincrement())
+  zapatoId Int
+  talla    String
+  stock    Int    @default(0)
+  zapato   Zapato @relation(fields: [zapatoId], references: [id], onDelete: Cascade)
+
+  @@unique([zapatoId, talla])
+}
+
+model Orden {
+  id             Int            @id @default(autoincrement())
+  usuarioId      Int
+  total          Float
+  estado         String         @default("PENDIENTE")
+  direccionEnvio String         @default("No especificada")
+  ciudad         String         @default("No especificada")
+  telefono       String         @default("No especificado")
+  metodoPago     String         @default("EFECTIVO")
+  createdAt      DateTime       @default(now())
+
+  usuario    Usuario        @relation(fields: [usuarioId], references: [id])
+  detalles   DetalleOrden[]
+}
+
+model DetalleOrden {
+  id        Int    @id @default(autoincrement())
+  ordenId   Int
+  zapatoId  Int
+  cantidad  Int
+  precio    Float
+  talla     String
+
+  orden     Orden  @relation(fields: [ordenId], references: [id])
+  zapato    Zapato @relation(fields: [zapatoId], references: [id])
+}
